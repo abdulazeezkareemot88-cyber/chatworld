@@ -1,8 +1,9 @@
-// ChatWorld Service Layer (Cross-Device Real-Time Backend API + Supabase fallback)
+// ChatWorld Service Layer (Cross-Device Real-Time Backend API + Supabase Storage fallback)
+import { supabase, isSupabaseConfigured } from '../lib/supabase';
 
-const API_BASE = ''; // relative path connects to current host (phone or PC)
+const API_BASE = ''; // relative path connects to current host (Vercel or local)
 
-// Helper for API fetch
+// Helper for API fetch that prevents JSON.parse syntax errors if a host returns HTML 404/500
 async function apiFetch(endpoint, options = {}) {
   try {
     const res = await fetch(`${API_BASE}${endpoint}`, {
@@ -12,11 +13,24 @@ async function apiFetch(endpoint, options = {}) {
       },
       ...options,
     });
-    if (!res.ok) {
-      const errData = await res.json().catch(() => ({}));
-      throw new Error(errData.error || `Request failed with status ${res.status}`);
+
+    const contentType = res.headers.get('content-type') || '';
+    let data = null;
+
+    if (contentType.includes('application/json')) {
+      data = await res.json().catch(() => null);
     }
-    return await res.json();
+
+    if (!res.ok) {
+      const errorMsg = data?.error || (res.status === 404 ? 'Service not found (404)' : `Request failed (${res.status})`);
+      throw new Error(errorMsg);
+    }
+
+    if (data === null) {
+      return {};
+    }
+
+    return data;
   } catch (err) {
     console.error(`API Error on ${endpoint}:`, err);
     throw err;
@@ -29,9 +43,9 @@ async function apiFetch(endpoint, options = {}) {
 export const searchUsers = async (query, currentUserId) => {
   try {
     const data = await apiFetch(`/api/users?q=${encodeURIComponent(query || '')}&exclude=${currentUserId || ''}`);
-    return data || [];
+    return Array.isArray(data) ? data : [];
   } catch (err) {
-    console.warn('Search fallback to local:', err);
+    console.warn('Search fallback to empty list:', err);
     return [];
   }
 };
@@ -43,7 +57,7 @@ export const getConversations = async (currentUserId) => {
   if (!currentUserId) return [];
   try {
     const data = await apiFetch(`/api/conversations?userId=${encodeURIComponent(currentUserId)}`);
-    return data || [];
+    return Array.isArray(data) ? data : [];
   } catch (err) {
     console.error('getConversations error:', err);
     return [];
@@ -91,7 +105,7 @@ export const getMessages = async (conversationId) => {
   if (!conversationId) return [];
   try {
     const data = await apiFetch(`/api/messages?conversationId=${encodeURIComponent(conversationId)}`);
-    return data || [];
+    return Array.isArray(data) ? data : [];
   } catch (err) {
     console.error('getMessages error:', err);
     return [];
@@ -154,11 +168,44 @@ export const markConversationAsRead = async (conversationId, currentUserId) => {
   } catch (e) {}
 };
 
+// Convert file to Base64 Data URL (guaranteed universal fallback)
+const fileToDataUrl = (file) => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = (err) => reject(err);
+    reader.readAsDataURL(file);
+  });
+};
+
 // ==========================================
 // File / Attachment Upload (Photos, Videos, Audio, Docs)
-// Works seamlessly from phone or PC!
+// Works seamlessly from phone or PC on Vercel and locally!
 // ==========================================
 export const uploadAttachment = async (file, currentUserId) => {
+  // Tier 1: If Supabase Storage is configured and active, upload directly
+  if (isSupabaseConfigured()) {
+    try {
+      const fileExt = file.name ? file.name.split('.').pop() : 'bin';
+      const fileName = `${currentUserId || 'user'}-${Date.now()}-${Math.random().toString(36).substring(2, 6)}.${fileExt}`;
+      const filePath = `chat/${fileName}`;
+
+      const { error: uploadErr } = await supabase.storage
+        .from('chat-attachments')
+        .upload(filePath, file, { upsert: true });
+
+      if (!uploadErr) {
+        const { data: { publicUrl } } = supabase.storage
+          .from('chat-attachments')
+          .getPublicUrl(filePath);
+        if (publicUrl) return publicUrl;
+      }
+    } catch (e) {
+      console.warn('Supabase Storage direct upload skipped, trying API:', e.message);
+    }
+  }
+
+  // Tier 2: Try Serverless / Local API upload
   try {
     const formData = new FormData();
     formData.append('file', file);
@@ -169,16 +216,24 @@ export const uploadAttachment = async (file, currentUserId) => {
       body: formData,
     });
 
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.error || 'Upload failed');
+    const contentType = res.headers.get('content-type') || '';
+    if (contentType.includes('application/json')) {
+      const data = await res.json().catch(() => null);
+      if (res.ok && data?.url) {
+        return data.url;
+      }
     }
-
-    const data = await res.json();
-    return data.url; // Returns /uploads/... which is served by the host
   } catch (err) {
-    console.error('uploadAttachment error:', err);
-    throw err;
+    console.warn('Server upload not reachable, using Data URL fallback:', err);
+  }
+
+  // Tier 3: Universal Data URL fallback (never fails, works on all devices and Vercel)
+  try {
+    const dataUrl = await fileToDataUrl(file);
+    return dataUrl;
+  } catch (fallbackErr) {
+    console.error('Data URL conversion failed:', fallbackErr);
+    throw new Error('Could not process file. Please select another file.');
   }
 };
 
@@ -249,7 +304,6 @@ export const viewStatus = async ({ statusItemId, userId }) => {
     });
     return data;
   } catch (err) {
-    // Non-critical
     return null;
   }
 };
@@ -277,7 +331,7 @@ const eventListeners = new Set();
 export const subscribeToRealtime = (onEvent) => {
   eventListeners.add(onEvent);
 
-  if (!activeEventSource) {
+  if (!activeEventSource && typeof window !== 'undefined' && typeof EventSource !== 'undefined') {
     try {
       activeEventSource = new EventSource('/api/realtime');
 
@@ -293,10 +347,10 @@ export const subscribeToRealtime = (onEvent) => {
       };
 
       activeEventSource.onerror = () => {
-        // EventSource will auto-reconnect
+        // EventSource will auto-reconnect or degrade gracefully
       };
     } catch (err) {
-      console.warn('Realtime SSE not available, using poll fallback:', err);
+      console.warn('Realtime SSE not available, using polling fallback:', err);
     }
   }
 

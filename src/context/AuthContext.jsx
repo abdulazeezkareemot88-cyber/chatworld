@@ -1,9 +1,45 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { uploadAttachment } from '../services/chatService';
 
 const AuthContext = createContext();
 
 const STORAGE_KEY = 'chatworld_current_user';
+
+// Safe fetch helper that prevents JSON.parse syntax errors if a host returns HTML 404/500
+async function safeFetch(url, options = {}) {
+  const res = await fetch(url, {
+    headers: {
+      'Content-Type': 'application/json',
+      ...(options.headers || {}),
+    },
+    ...options,
+  });
+
+  const contentType = res.headers.get('content-type') || '';
+  let data = null;
+
+  if (contentType.includes('application/json')) {
+    data = await res.json().catch(() => null);
+  }
+
+  if (!res.ok) {
+    if (data && data.error) {
+      throw new Error(data.error);
+    }
+    if (res.status === 404) {
+      throw new Error('ChatWorld serverless backend not responding (404). Please ensure vercel.json is deployed.');
+    }
+    const raw = await res.text().catch(() => '');
+    throw new Error(`Server returned status ${res.status}: ${raw.slice(0, 100)}`);
+  }
+
+  if (data === null) {
+    const raw = await res.text().catch(() => '');
+    throw new Error(`Unexpected non-JSON response from server: ${raw.slice(0, 100)}`);
+  }
+
+  return data;
+}
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -43,9 +79,8 @@ export const AuthProvider = ({ children }) => {
       const cleanUsername = (username || phone || '').toLowerCase().replace(/[^a-z0-9_]/g, '');
       const cleanPhone = (phone || '').trim();
 
-      const res = await fetch('/api/auth/register', {
+      const data = await safeFetch('/api/auth/register', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           phone: cleanPhone,
           username: cleanUsername,
@@ -57,11 +92,6 @@ export const AuthProvider = ({ children }) => {
           password,
         }),
       });
-
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || 'Failed to create account.');
-      }
 
       const registeredUser = data.user;
       localStorage.setItem(STORAGE_KEY, JSON.stringify(registeredUser));
@@ -83,19 +113,13 @@ export const AuthProvider = ({ children }) => {
   const signIn = async (identifier, password = '') => {
     setError(null);
     try {
-      const res = await fetch('/api/auth/login', {
+      const data = await safeFetch('/api/auth/login', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           identifier: identifier.trim(),
           password,
         }),
       });
-
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || 'Invalid credentials.');
-      }
 
       const loggedUser = data.user;
       localStorage.setItem(STORAGE_KEY, JSON.stringify(loggedUser));
@@ -125,19 +149,13 @@ export const AuthProvider = ({ children }) => {
     if (!user) throw new Error('Not authenticated');
 
     try {
-      const res = await fetch('/api/auth/update-profile', {
+      const data = await safeFetch('/api/auth/update-profile', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           userId: user.id,
           ...updates,
         }),
       });
-
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || 'Failed to update profile');
-      }
 
       const updated = data.user;
       setProfile(updated);
