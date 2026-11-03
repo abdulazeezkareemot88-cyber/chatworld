@@ -1,0 +1,79 @@
+{
+  "users": [
+    {
+      "id": "support-team",
+      "username": "support",
+      "display_name": "ChatWorld Support",
+      "avatar_url": "https://api.dicebear.com/7.x/bottts/svg?seed=support_bot",
+      "phone": "+18005550199",
+      "status_message": "Welcome to ChatWorld! Feel free to say hello 👋",
+      "password": "",
+      "created_at": "2026-10-20T10:00:00.000Z"
+    },
+    {
+      "id": "user-1792574971728-9vrf",
+      "username": "user_410581",
+      "display_name": "Reemah",
+      "phone": "+234 8086410581",
+      "avatar_url": "/uploads/1792574971684-c6l8ks.jpeg",
+      "status_message": "Hey there! I am using ChatWorld.",
+      "password": "oye170@#",
+      "created_at": "2026-10-21T09:29:31.728Z",
+      "last_seen": "2026-10-21T09:29:31.728Z"
+    }
+  ],
+  "conversations": [
+    {
+      "id": "conv-welcome-user-1792574971728-9vrf",
+      "type": "direct",
+      "name": "ChatWorld Support",
+      "avatar_url": "https://api.dicebear.com/7.x/bottts/svg?seed=support_bot",
+      "members": [
+        "user-1792574971728-9vrf",
+        "support-team"
+      ],
+      "last_message": {
+        "id": "msg-1792576994363-wen7",
+        "conversation_id": "conv-welcome-user-1792574971728-9vrf",
+        "sender_id": "user-1792574971728-9vrf",
+        "content": "Hi",
+        "message_type": "text",
+        "media_url": null,
+        "reply_to_id": null,
+        "status": "sent",
+        "reactions": {},
+        "is_deleted": false,
+        "created_at": "2026-10-21T10:03:14.363Z"
+      },
+      "created_at": "2026-10-21T09:29:31.728Z",
+      "updated_at": "2026-10-21T10:03:14.363Z"
+    }
+  ],
+  "messages": {
+    "conv-welcome-user-1792574971728-9vrf": [
+      {
+        "id": "msg-w-1792574971728",
+        "conversation_id": "conv-welcome-user-1792574971728-9vrf",
+        "sender_id": "support-team",
+        "content": "👋 Welcome to ChatWorld, Reemah! You can chat, upload videos & photos, and share status updates.",
+        "message_type": "text",
+        "created_at": "2026-10-21T09:29:31.728Z",
+        "status": "read"
+      },
+      {
+        "id": "msg-1792576994363-wen7",
+        "conversation_id": "conv-welcome-user-1792574971728-9vrf",
+        "sender_id": "user-1792574971728-9vrf",
+        "content": "Hi",
+        "message_type": "text",
+        "media_url": null,
+        "reply_to_id": null,
+        "status": "sent",
+        "reactions": {},
+        "is_deleted": false,
+        "created_at": "2026-10-21T10:03:14.363Z"
+      }
+    ]
+  },
+  "statuses": []
+}

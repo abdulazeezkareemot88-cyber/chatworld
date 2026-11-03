@@ -1,0 +1,138 @@
+@import url('https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+  /* WhatsApp Classic Green & Slate Palette (Light Mode) */
+  --primary: #00a884;
+  --primary-hover: #008f6f;
+  --primary-dark: #008069;
+  --primary-light: #25d366;
+  --accent-green: #25d366;
+  
+  --bg-app: #f0f2f5;
+  --bg-sidebar: #ffffff;
+  --bg-chat-header: #f0f2f5;
+  --bg-chat-canvas: #efeae2;
+  --bg-chat-input: #f0f2f5;
+  --bg-card: #ffffff;
+  
+  --bubble-outgoing: #d9fdd3;
+  --bubble-incoming: #ffffff;
+  --bubble-text: #111b21;
+  --bubble-time: #667781;
+  
+  --text-primary: #111b21;
+  --text-secondary: #667781;
+  --text-muted: #8696a0;
+  --text-link: #027eb5;
+  
+  --border-light: #e9edef;
+  --border-subtle: #d1d7db;
+  --item-hover: #f5f6f6;
+  --item-active: #ebebeb;
+  
+  --tick-delivered: #8696a0;
+  --tick-read: #53bdeb;
+  
+  --shadow-sm: 0 1px 2px rgba(11, 20, 26, 0.08);
+  --shadow-md: 0 4px 12px rgba(11, 20, 26, 0.12);
+  --shadow-lg: 0 12px 28px rgba(11, 20, 26, 0.2);
+  
+  --font-sans: 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Inter', Roboto, sans-serif;
+  
+  --danger: #ea0038;
+  --danger-hover: #cf0032;
+}
+
+/* Dark Mode Variables (WhatsApp Web Dark Palette) */
+html.dark-mode {
+  --primary: #00a884;
+  --primary-hover: #029474;
+  --primary-dark: #005c4b;
+  --primary-light: #25d366;
+  --accent-green: #00a884;
+
+  --bg-app: #0c1317;
+  --bg-sidebar: #111b21;
+  --bg-chat-header: #202c33;
+  --bg-chat-canvas: #0b141a;
+  --bg-chat-input: #202c33;
+  --bg-card: #202c33;
+
+  --bubble-outgoing: #005c4b;
+  --bubble-incoming: #202c33;
+  --bubble-text: #e9edef;
+  --bubble-time: #8696a0;
+
+  --text-primary: #e9edef;
+  --text-secondary: #8696a0;
+  --text-muted: #667781;
+  --text-link: #53bdeb;
+
+  --border-light: #222e35;
+  --border-subtle: #2a3942;
+  --item-hover: #202c33;
+  --item-active: #2a3942;
+
+  --tick-delivered: #8696a0;
+  --tick-read: #53bdeb;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 12px 28px rgba(0, 0, 0, 0.6);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  font-family: var(--font-sans);
+  background-color: var(--bg-app);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background-color: var(--bg-app);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(134, 150, 160, 0.3);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(134, 150, 160, 0.5);
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+}
+
+input, textarea {
+  font-family: inherit;
+}
